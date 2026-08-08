@@ -3059,9 +3059,17 @@ Object.assign(window, {
   var COLUNA_PARA_CAMPO = {};
   Object.keys(CAMPO_PARA_COLUNA).forEach(function (k) { COLUNA_PARA_CAMPO[CAMPO_PARA_COLUNA[k]] = k; });
 
+  function isoParaDataBR_(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
   function linhaParaPedido(row) {
     var obj = { ID: row.id };
     Object.keys(COLUNA_PARA_CAMPO).forEach(function (col) { obj[COLUNA_PARA_CAMPO[col]] = row[col]; });
+    obj['Data'] = isoParaDataBR_(row.data);
     if (row.valor_pago !== null && row.valor_pago !== undefined) {
       obj['Valor Pago'] = 'R$ ' + Number(row.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     } else {
@@ -3085,7 +3093,7 @@ Object.assign(window, {
     return row;
   }
   function linhaParaHistorico(h) {
-    return { Referencia: h.referencia, Usuario: h.usuario_nome, DataHora: h.data_hora, Descricao: h.descricao };
+    return { Referencia: h.referencia, Usuario: h.usuario_nome, DataHora: isoParaDataBR_(h.data_hora), Descricao: h.descricao };
   }
   function registrarHistorico_(pedidoId, referencia, descricao) {
     return SupabaseShared.client.from('historico').insert({
