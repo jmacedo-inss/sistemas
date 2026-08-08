@@ -3121,12 +3121,21 @@ Object.assign(window, {
           unidadeNome: sessao.unidadeNome
         })
       }).then(function (r) { return r.json(); }).then(function (res) {
-        if (!res.ok) return dados;
+        if (!res.ok) {
+          var erro = new Error(res.error || 'Falha ao subir o comprovante pro Drive.');
+          erro.comprovanteFalhou = true;
+          throw erro;
+        }
         var novo = Object.assign({}, dados);
         novo['Comprovante'] = res.url;
         delete novo.ComprovanteBase64; delete novo.ComprovanteNome; delete novo.ComprovanteTipo;
         return novo;
       });
+    }).catch(function (err) {
+      console.error('Falha ao enviar comprovante:', err);
+      var erro = new Error('Não consegui enviar o comprovante (' + (err && err.message ? err.message : 'erro de conexão') + '). Tenta salvar sem anexo, ou tenta de novo.');
+      erro.comprovanteFalhou = true;
+      throw erro;
     });
   }
 
@@ -4222,6 +4231,10 @@ Object.assign(window, {
       } else {
         el.formErro.textContent = res.error || 'Não foi possível salvar o pedido.';
       }
+    }).catch(function (err) {
+      el.salvarPedido.disabled = false;
+      console.error('Falha ao salvar pedido:', err);
+      el.formErro.textContent = (err && err.message) ? err.message : 'Não foi possível salvar o pedido.';
     });
   }
 
