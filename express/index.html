@@ -185,6 +185,7 @@
 #rota-dashboard .suspeitos-table td:first-child {font-weight:700;color:var(--text);white-space:nowrap;width:1%;}
 #rota-dashboard .suspeitos-table tr:last-child td {border-bottom:none;}
 #rota-dashboard .suspeito-total {font-weight:500;color:var(--rose);font-size:11px;}
+#rota-dashboard .suspeito-consultor {font-size:11px;color:var(--text-faint);font-weight:500;}
 #rota-dashboard .reasons-panel {margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-soft);}
 #rota-dashboard .reasons-title {font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:6px;}
 #rota-dashboard .reasons-table {width:100%;border-collapse:collapse;font-size:11.5px;}
@@ -2101,9 +2102,9 @@ function clientesSuspeitos_(periodRecords){
   const porCliente = {};
   periodRecords.filter(r=>r.tipo==='ticket' && r.cliente).forEach(r=>{
     if(!porCliente[r.cliente]) porCliente[r.cliente] = [];
-    porCliente[r.cliente].push(r.modelo || '(modelo não identificado)');
+    porCliente[r.cliente].push({modelo: r.modelo || '(modelo não identificado)', usuario: r.usuario || ''});
   });
-  return Object.entries(porCliente).filter(([,modelos])=>modelos.length>3);
+  return Object.entries(porCliente).filter(([,itens])=>itens.length>3);
 }
 function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
   viewPrefix = viewPrefix || 'x';
@@ -2489,13 +2490,19 @@ function abrirModalSuspeitos(mk){
   if(!lista.length){
     body.innerHTML = '<div class="empty">Nenhum registro suspeito.</div>';
   } else {
-    const linhas = lista.map(([cliente, modelos])=>{
+    const linhas = lista.map(([cliente, itens])=>{
       const contagem = {};
-      modelos.forEach(m=>{ contagem[m] = (contagem[m]||0)+1; });
-      const modelosTexto = Object.entries(contagem).map(([m,c])=>`<div>${m}${c>1?' × '+c:''}</div>`).join('');
+      itens.forEach(it=>{
+        const chave = it.modelo + '||' + it.usuario;
+        if(!contagem[chave]) contagem[chave] = {modelo: it.modelo, usuario: it.usuario, count: 0};
+        contagem[chave].count++;
+      });
+      const itensTexto = Object.values(contagem).map(c=>
+        `<div>${c.modelo}${c.count>1?' × '+c.count:''} <span class="suspeito-consultor">— ${c.usuario ? displayName(c.usuario) : 'consultor não identificado'}</span></div>`
+      ).join('');
       return `<tr>
-        <td class="mono">${cliente}<span class="suspeito-total"> (${modelos.length})</span></td>
-        <td>${modelosTexto}</td>
+        <td class="mono">${cliente}<span class="suspeito-total"> (${itens.length})</span></td>
+        <td>${itensTexto}</td>
       </tr>`;
     }).join('');
     body.innerHTML = `<table class="suspeitos-table">
