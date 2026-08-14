@@ -188,6 +188,13 @@
 #rota-dashboard .suspeito-consultor {font-size:11px;color:var(--text-faint);font-weight:500;}
 #rota-dashboard .reasons-panel {margin-top:10px;padding-top:10px;border-top:1px dashed var(--border-soft);}
 #rota-dashboard .reasons-title {font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:6px;}
+#rota-dashboard .weekday-dist{display:flex;gap:6px;flex-wrap:wrap;}
+#rota-dashboard .weekday-chip{flex:1;min-width:54px;text-align:center;padding:8px 4px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border-soft);}
+#rota-dashboard .weekday-chip.top{background:var(--accent-dim);border-color:var(--accent);}
+#rota-dashboard .weekday-chip.domingo{border-style:dashed;}
+#rota-dashboard .wd-nome{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;}
+#rota-dashboard .weekday-chip.top .wd-nome{color:var(--accent);}
+#rota-dashboard .wd-num{font-family:'IBM Plex Mono';font-size:16px;font-weight:700;color:var(--text);margin-top:2px;}
 #rota-dashboard .reasons-table {width:100%;border-collapse:collapse;font-size:11.5px;}
 #rota-dashboard .reasons-table th {text-align:center;color:var(--text-faint);font-weight:500;font-size:9.5px;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid var(--border);}
 #rota-dashboard .reasons-table th:first-child {text-align:left;}
@@ -955,7 +962,7 @@ body{margin:0;}
 
   <div class="goal-cards" id="goal-cards"></div>
 
-  <div class="panel lancar-card">
+  <div class="panel lancar-card" id="lancar-card">
     <h2>Lançar</h2>
     <div class="lancar-cols">
       <div class="lancar-col">
@@ -2146,6 +2153,21 @@ function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
           </table>
         </div>`;
       }
+      const dist = distribuicaoDiasSemana_(groups[k]);
+      if(dist.total>0){
+        analiseHtml += `
+        <div class="reasons-panel">
+          <div class="reasons-title">TAs válidos por dia da semana${dist.diaTop ? ' — mais movimentado: <strong>'+dist.diaTop+'</strong>' : ''}</div>
+          <div class="weekday-dist">
+            ${dist.dias.map(d=>`
+              <div class="weekday-chip ${d.nome===dist.diaTop?'top':''} ${d.dom?'domingo':''}">
+                <div class="wd-nome">${d.nome}</div>
+                <div class="wd-num">${d.count}</div>
+              </div>`).join('')}
+          </div>
+          <div class="hint" style="margin-top:6px;">Domingos neste período: <strong>${dist.domingos}</strong> TA${dist.domingos!==1?'s':''} válido${dist.domingos!==1?'s':''}</div>
+        </div>`;
+      }
     }
 
     let suspeitosTag = '';
@@ -2187,6 +2209,24 @@ function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
 function weekdayShort_(dateStr){
   const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   return dias[new Date(dateStr+'T00:00:00').getDay()];
+}
+function distribuicaoDiasSemana_(periodRecords){
+  const nomes = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const contagem = [0,0,0,0,0,0,0];
+  periodRecords.filter(r=>r.tipo==='ticket' && !ehInvalido_(r)).forEach(r=>{
+    const dt = normalizeDateStr_(r.data);
+    if(!dt) return;
+    contagem[new Date(dt+'T00:00:00').getDay()]++;
+  });
+  const total = contagem.reduce((a,b)=>a+b,0);
+  let maiorIdx = 0;
+  contagem.forEach((c,i)=>{ if(c>contagem[maiorIdx]) maiorIdx = i; });
+  return {
+    total,
+    domingos: contagem[0],
+    diaTop: total>0 ? nomes[maiorIdx] : '',
+    dias: nomes.map((nome,i)=>({nome, count: contagem[i], dom: i===0}))
+  };
 }
 function isoWeekNumber_(dateStr){
   const d = new Date(dateStr+'T00:00:00');
@@ -2381,6 +2421,8 @@ function renderUnidadeArea(){
   if(window.SidebarShared) SidebarShared.setUnidades(lista, session.unidadeId);
 }
 async function renderUserChip(){
+  const lancarCard = document.getElementById('lancar-card');
+  if(lancarCard) lancarCard.hidden = session.nivel !== 'admin';
   if(window.SidebarShared){
     const lista = session.nivel === 'admin'
       ? session.unidades.map(u=>({id:u.ID, nome:u.Nome}))
