@@ -2153,20 +2153,32 @@ function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
           </table>
         </div>`;
       }
-      const dist = distribuicaoDiasSemana_(groups[k]);
+      const dist = distribuicaoDiasSemana_(groups[k], viewPrefix==='mes' ? k : null);
       if(dist.total>0){
         analiseHtml += `
         <div class="reasons-panel">
-          <div class="reasons-title">TAs válidos por dia da semana${dist.diaTop ? ' — mais movimentado: <strong>'+dist.diaTop+'</strong>' : ''}</div>
+          <div class="reasons-title">Dia da semana com mais registros (média por dia)${dist.diaTopMedia ? ' — <strong>'+dist.diaTopMedia+'</strong>' : ''}</div>
           <div class="weekday-dist">
-            ${dist.dias.map(d=>`
-              <div class="weekday-chip ${d.nome===dist.diaTop?'top':''} ${d.dom?'domingo':''}">
-                <div class="wd-nome">${d.nome}</div>
-                <div class="wd-num">${d.count}</div>
+            ${dist.medias.map(d=>`
+              <div class="weekday-chip ${d.nome===dist.diaTopMedia?'top':''}">
+                <div class="wd-nome">${d.nome.slice(0,3)}</div>
+                <div class="wd-num">${d.media.toFixed(1)}</div>
               </div>`).join('')}
           </div>
-          <div class="hint" style="margin-top:6px;">Domingos neste período: <strong>${dist.domingos}</strong> TA${dist.domingos!==1?'s':''} válido${dist.domingos!==1?'s':''}</div>
         </div>`;
+        if(dist.domingos.length>0){
+          analiseHtml += `
+          <div class="reasons-panel">
+            <div class="reasons-title">TAs válidos em cada domingo do mês</div>
+            <div class="weekday-dist">
+              ${dist.domingos.map(d=>`
+                <div class="weekday-chip domingo">
+                  <div class="wd-nome">${fmtDateBR(d.data)}</div>
+                  <div class="wd-num">${d.count}</div>
+                </div>`).join('')}
+            </div>
+          </div>`;
+        }
       }
     }
 
@@ -2210,22 +2222,43 @@ function weekdayShort_(dateStr){
   const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   return dias[new Date(dateStr+'T00:00:00').getDay()];
 }
-function distribuicaoDiasSemana_(periodRecords){
+function distribuicaoDiasSemana_(periodRecords, mesKey){
   const nomes = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const contagem = [0,0,0,0,0,0,0];
+  const porData = {};
   periodRecords.filter(r=>r.tipo==='ticket' && !ehInvalido_(r)).forEach(r=>{
     const dt = normalizeDateStr_(r.data);
     if(!dt) return;
-    contagem[new Date(dt+'T00:00:00').getDay()]++;
+    const dia = new Date(dt+'T00:00:00').getDay();
+    contagem[dia]++;
+    porData[dt] = (porData[dt]||0) + 1;
   });
   const total = contagem.reduce((a,b)=>a+b,0);
-  let maiorIdx = 0;
-  contagem.forEach((c,i)=>{ if(c>contagem[maiorIdx]) maiorIdx = i; });
+
+  const ocorrencias = [0,0,0,0,0,0,0];
+  const domingosDatas = [];
+  if(mesKey){
+    const [ano, mes] = mesKey.split('-').map(Number);
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    for(let d=1; d<=diasNoMes; d++){
+      const diaSemana = new Date(ano, mes-1, d).getDay();
+      ocorrencias[diaSemana]++;
+      if(diaSemana===0) domingosDatas.push(ano+'-'+String(mes).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+    }
+  }
+
+  const medias = nomes.map((nome,i)=>({
+    nome,
+    media: ocorrencias[i]>0 ? contagem[i]/ocorrencias[i] : 0
+  }));
+  let topIdx = 0;
+  medias.forEach((d,i)=>{ if(d.media>medias[topIdx].media) topIdx = i; });
+
   return {
     total,
-    domingos: contagem[0],
-    diaTop: total>0 ? nomes[maiorIdx] : '',
-    dias: nomes.map((nome,i)=>({nome, count: contagem[i], dom: i===0}))
+    diaTopMedia: total>0 && medias[topIdx].media>0 ? medias[topIdx].nome : '',
+    medias,
+    domingos: domingosDatas.map(dt=>({data: dt, count: porData[dt]||0}))
   };
 }
 function isoWeekNumber_(dateStr){
