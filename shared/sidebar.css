@@ -51,6 +51,7 @@
 #shared-sidebar-root .sidebar-user-menu{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:#FFFFFF;border:1px solid #DCE4F0;border-radius:10px;box-shadow:0 1em 2.2em rgba(20,30,60,0.12);padding:6px;z-index:50;}
 #shared-sidebar-root .sidebar-user-menu.open{display:block;}
 #shared-sidebar-root .sidebar-user-menu button{width:100%;display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:7px;background:none;border:none;color:#586376;font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;text-align:left;}
+#shared-sidebar-root .sidebar-user-menu button[hidden]{display:none;}
 #shared-sidebar-root .sidebar-user-menu button:hover{background:#F5F8FC;color:#101827;}
 #shared-sidebar-root .sidebar-user-menu button svg{width:15px;height:15px;flex-shrink:0;}
 #shared-sidebar-root .sidebar-user-menu button.danger{color:#E23B4C;}
