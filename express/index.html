@@ -2164,7 +2164,7 @@ function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
             ${dist.medias.map(d=>`
               <div class="weekday-chip ${d.nome===dist.diaTopMedia?'top':''}">
                 <div class="wd-nome">${d.nome.slice(0,3)}</div>
-                <div class="wd-num">${d.media.toFixed(1)}</div>
+                <div class="wd-num">${Math.round(d.media)}</div>
               </div>`).join('')}
           </div>
         </div>`;
