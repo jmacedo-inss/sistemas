@@ -1531,10 +1531,10 @@ body{margin:0;}
       <div class="bulk-bar" id="bulk-bar" hidden>
         <span id="bulk-count">0 selecionados</span>
         <button class="ghost" id="bulk-desmarcar" onclick="limparSelecaoHist()">Cancelar seleção</button>
-        <button class="btn-danger-solid" onclick="excluirSelecionadosHist()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Excluir selecionados</button>
+        <button class="btn-danger-solid" id="bulk-excluir" onclick="excluirSelecionadosHist()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Excluir selecionados</button>
       </div>
       <table>
-        <thead><tr><th class="check-col"><input type="checkbox" id="hist-check-todos" onchange="toggleSelecionarTodosHist(this)" title="Selecionar todos"></th><th>Data</th><th>Usuário</th><th>Tipo</th><th class="num">Valor</th><th></th></tr></thead>
+        <thead><tr><th class="check-col" id="hist-check-col"><input type="checkbox" id="hist-check-todos" onchange="toggleSelecionarTodosHist(this)" title="Selecionar todos"></th><th>Data</th><th>Usuário</th><th>Tipo</th><th class="num">Valor</th><th></th></tr></thead>
         <tbody id="hist-body"></tbody>
       </table>
 
@@ -2935,7 +2935,7 @@ function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
           </div>
         </div>
         ${analiseHtml}
-        ${temValidacao ? `<div class="fee-btn-wrap"><button class="btn-fee" onclick="abrirModalFee('${k}')">Gerar FEE</button></div>` : ''}
+        ${temValidacao && session.nivel === 'admin' ? `<div class="fee-btn-wrap"><button class="btn-fee" onclick="abrirModalFee('${k}')">Gerar FEE</button></div>` : ''}
       </div>`;
   }).join('');
 }
@@ -3077,13 +3077,14 @@ function renderHistorico(){
   histVisibleIds = list.map(r=>r.id);
   const body = document.getElementById('hist-body');
   if(list.length===0){ body.innerHTML = '<tr><td colspan="6" class="empty">Nenhum lançamento encontrado para este filtro.</td></tr>'; atualizarBulkBarHist(); return; }
+  const ehAdmin = session.nivel === 'admin';
   body.innerHTML = list.map(r=>`
     <tr>
-      <td class="check-col"><input type="checkbox" class="row-check" data-id="${r.id}" onchange="toggleSelecaoHist('${r.id}',this)" ${histSelecionados.has(r.id)?'checked':''}></td>
+      <td class="check-col">${ehAdmin ? `<input type="checkbox" class="row-check" data-id="${r.id}" onchange="toggleSelecaoHist('${r.id}',this)" ${histSelecionados.has(r.id)?'checked':''}>` : ''}</td>
       <td class="mono">${fmtDateBR(r.data)}</td><td>${displayName(r.usuario)}</td>
       <td>${r.tipo==='orcamento' ? '<span class="tag orc">Orçamento</span>' : (r.subtipo==='OS' ? '<span class="tag os">Transferido p/ OS</span>' : '<span class="tag ta">Válido</span>')}</td>
       <td class="num">${r.valor>0 ? fmtBRL(r.valor) : '—'}</td>
-      <td style="text-align:right"><button class="del-btn" onclick="deleteEntry('${r.id}')">×</button></td>
+      <td style="text-align:right">${ehAdmin ? `<button class="del-btn" onclick="deleteEntry('${r.id}')">×</button>` : ''}</td>
     </tr>`).join('');
   atualizarBulkBarHist();
 }
@@ -3179,6 +3180,10 @@ async function renderUserChip(){
   if(lancarCard) lancarCard.hidden = session.nivel !== 'admin';
   const validacaoPanel = document.getElementById('validacao-panel');
   if(validacaoPanel) validacaoPanel.hidden = session.nivel !== 'admin';
+  const histCheckCol = document.getElementById('hist-check-col');
+  if(histCheckCol) histCheckCol.querySelector('input').hidden = session.nivel !== 'admin';
+  const bulkExcluir = document.getElementById('bulk-excluir');
+  if(bulkExcluir) bulkExcluir.hidden = session.nivel !== 'admin';
   if(window.SidebarShared){
     const lista = session.nivel === 'admin'
       ? session.unidades.map(u=>({id:u.ID, nome:u.Nome}))
