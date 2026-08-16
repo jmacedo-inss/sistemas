@@ -4471,7 +4471,7 @@ Object.assign(window, {
   function calcularBase_(){
     var partes = location.pathname.split('/').filter(Boolean);
     partes.pop(); // remove "dashboard" ou "express", sobra só a raiz do site
-    return '/' + partes.join('/') + '/';
+    return partes.length ? '/' + partes.join('/') + '/' : '/';
   }
   var BASE = calcularBase_();
   var ROTAS = {};
