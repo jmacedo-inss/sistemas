@@ -39,12 +39,15 @@
   function preencherTemplate(tpl, activeKey){
     var dashHref = '../dashboard/';
     var pedHref = '../express/';
+    var calcHref = '../calculadora/';
     return tpl
       .replace(/__LOGO__/g, LOGO)
       .replace(/__DASH_HREF__/g, dashHref)
       .replace(/__PED_HREF__/g, pedHref)
+      .replace(/__CALC_HREF__/g, calcHref)
       .replace(/__DASH_ACTIVE__/g, activeKey === 'dashboard' ? ' active' : '')
-      .replace(/__PED_ACTIVE__/g, activeKey === 'pedidos' ? ' active' : '');
+      .replace(/__PED_ACTIVE__/g, activeKey === 'pedidos' ? ' active' : '')
+      .replace(/__CALC_ACTIVE__/g, activeKey === 'calculadora' ? ' active' : '');
   }
 
   function moverIndicador_(){
@@ -197,11 +200,12 @@
       var links = document.querySelectorAll('#shared-sidebar-root .sidebar-nav a');
       if(links[0]) links[0].classList.toggle('active', activeKey === 'dashboard');
       if(links[1]) links[1].classList.toggle('active', activeKey === 'pedidos');
+      if(links[2]) links[2].classList.toggle('active', activeKey === 'calculadora');
       moverIndicador_();
     },
     onNavClick: function(fn){
       var links = document.querySelectorAll('#shared-sidebar-root .sidebar-nav a');
-      var chaves = ['dashboard', 'pedidos'];
+      var chaves = ['dashboard', 'pedidos', 'calculadora'];
       Array.prototype.forEach.call(links, function(a, i){
         a.addEventListener('click', function(e){
           var seguir = fn(chaves[i], a.getAttribute('href'), e);
