@@ -1491,7 +1491,7 @@ body{margin:0;}
   </section>
 
   <section class="view" id="view-mensal">
-    <div class="panel">
+    <div class="panel" id="validacao-panel">
       <div class="head-row">
         <h2>Validar TAs pagos <span style="font-weight:400;color:var(--text-faint);font-size:12.5px;">(planilha de conciliação da Samsung)</span></h2>
       </div>
@@ -3177,6 +3177,8 @@ function renderUnidadeArea(){
 async function renderUserChip(){
   const lancarCard = document.getElementById('lancar-card');
   if(lancarCard) lancarCard.hidden = session.nivel !== 'admin';
+  const validacaoPanel = document.getElementById('validacao-panel');
+  if(validacaoPanel) validacaoPanel.hidden = session.nivel !== 'admin';
   if(window.SidebarShared){
     const lista = session.nivel === 'admin'
       ? session.unidades.map(u=>({id:u.ID, nome:u.Nome}))
