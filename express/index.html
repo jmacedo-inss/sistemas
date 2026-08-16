@@ -2153,11 +2153,13 @@ function renderPeriodTable(elId, groups, labelFn, mostrarAnalise, viewPrefix){
           </table>
         </div>`;
       }
+    }
+    if(mostrarAnalise){
       const dist = distribuicaoDiasSemana_(groups[k], viewPrefix==='mes' ? k : null);
       if(dist.total>0){
         analiseHtml += `
         <div class="reasons-panel">
-          <div class="reasons-title">Dia da semana com mais registros (média por dia)${dist.diaTopMedia ? ' — <strong>'+dist.diaTopMedia+'</strong>' : ''}</div>
+          <div class="reasons-title">Dia da semana com mais registros (média por dia)${dist.diaTopMedia ? ' — <strong>'+dist.diaTopMedia+'</strong>' : ''}${!temValidacao ? ' <span class="hint">(ainda sem validação da Samsung)</span>' : ''}</div>
           <div class="weekday-dist">
             ${dist.medias.map(d=>`
               <div class="weekday-chip ${d.nome===dist.diaTopMedia?'top':''}">
